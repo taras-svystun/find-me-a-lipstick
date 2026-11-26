@@ -1,1 +1,2 @@
-# Python dependencies, added as steps need them. A1 uses only the standard library.
+# Python dependencies, added as steps need them.
+pillow==13.0.0

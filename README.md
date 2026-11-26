@@ -16,4 +16,7 @@ Commands are added here as each step lands.
 
 ```sh
 .venv/bin/python scripts/fetch_items.py   # A1: download ~135 MB, keep ~15.6k items -> data/items.jsonl
+.venv/bin/python scripts/image_list.py    # A2: writes data/images.curl
+curl --parallel --parallel-max 16 -sS -K data/images.curl   # A2: download (outside the sandbox)
+.venv/bin/python scripts/image_list.py --check   # A2: counts images, lists missing ones
 ```

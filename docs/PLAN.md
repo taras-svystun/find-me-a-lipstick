@@ -68,7 +68,7 @@ so Taras can guess them.
 - ✅ **A1. Data slice.** Range-request the first ~135 MB, parse it, keep Skin Care, Makeup and
   Fragrance, write `data/items.jsonl`.
   Check: item count and field coverage printed; coverage close to the 2026-11-20 sample.
-- **A2. Images.** A script writes the URL list; Taras downloads it with one command.
+- ✅ **A2. Images.** A script writes the URL list; Taras downloads it with one command.
   Check: one non-empty image per item with an image URL, missing ones listed.
 - **A3. Test queries and relevance labels.** A local Qwen (Ollama) writes ~200 shopper-style
   queries from sampled items; labels come from category and brand.

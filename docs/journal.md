@@ -18,3 +18,7 @@ Newest at the bottom.
   are shorter. The head is a bit richer in text than the whole catalogue. Source: range requests, this session.
 - 2026-11-26, privacy: the private context moved to ask-bro, and the public repo carries none of it.
   Pseudonyms were rejected: the context is easy to decode, and git history is permanent.
+- 2026-11-26, A2 images: Taras downloaded 15,624 main images (369 MB) with one parallel curl. 19 are
+  60x40 "no photo" placeholders (13 GIF, 6 JPEG) that Amazon serves instead of a 404; `--check`
+  detects them by pixel size, since 12 real photos are just as small in bytes (~1-2 KB thumbnails).
+  Result: 15,605 real photos. 59 URLs are shared by several items. Items without a photo are handled in A6.

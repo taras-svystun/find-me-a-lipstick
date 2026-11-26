@@ -38,6 +38,11 @@ The sandbox blocks `m.media-amazon.com` (product images) and may block model hos
 download is blocked, give Taras one command to paste into his terminal, and check its result
 afterwards.
 
+## Review
+
+Run the `reviewer` agent (`.claude/agents/reviewer.md`) after a change to `docs/PLAN.md` and after
+each step that adds or changes a number in the ablation table. Fix its blockers before the commit.
+
 ## Finishing a step
 
 - `README.md` has a copy-paste command for every way to run the project.
