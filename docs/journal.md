@@ -53,3 +53,21 @@ Newest at the bottom.
   Lesson guesses: toy "red matte lipstick", labels = any lipstick, system A returns 10 nude, B 10 red;
   Taras guessed precision@10 A 0, B 1.0; truth both 1.0 (the label cannot see colour). Trap: which
   system gains from the grade-2 source item? Taras guessed BM25, because Qwen reuses title words: right.
+- 2026-11-26, A4 metrics: `scripts/metrics.py` gives precision@10, nDCG@10 and "source item in top 10",
+  and `evaluate()` averages them over the slices in the plan; `tests/test_metrics.py` has 11 cases
+  computed by hand (`pytest -q`: 11 passed). Decision: linear gain (the grade), not 2^grade - 1, which
+  would make the source item worth 3 shelf items instead of 2 and so favour BM25, which finds it most
+  easily. Cost: our nDCG is not comparable with tools that default to 2^grade - 1.
+  Evidence the tests bite: 8 deliberate bugs (exponential gain, 1/rank discount, ideal from retrieved
+  items only, dividing precision by the returned count, ...) each made at least one test fail.
+  Tests-first was not followed for the first 9 tests (written with the code); it was for the qid fix
+  below (2 failed before, 11 passed after) and is a rule from now on (`CLAUDE.md`, Tests).
+  Random ranking on the 149 test queries: no-brand precision@10 0.04 against 0.036 expected from label
+  sizes, nDCG@10 0.023. Reviewer: no blockers; fixed a silent-zero bug (a run loaded from JSON has string
+  qids, so every query would score 0); `evaluate()` now converts keys and raises if no query matches.
+  Note: nDCG on the "brand" and "no brand" slices is on different scales (a source-only system scores
+  0.81 against 0.36), so compare systems within one slice, never across.
+  Lesson guesses: toy ranking L1, S, X, L2, Y: Taras guessed 0.85-0.95, truth 0.86. Interactive page
+  with 4 puzzles: Taras got 2 of 4 right before the reveal. Team Lead question "why divide by the ideal
+  DCG?": Taras said "to get 0..1"; the deeper reason is that each query has its own maximum (2 for a
+  one-item brand query, 5.5 for a full shelf), so a mean of raw DCG would rank queries, not systems.

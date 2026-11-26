@@ -38,6 +38,20 @@ The sandbox blocks `m.media-amazon.com` (product images) and may block model hos
 download is blocked, give Taras one command to paste into his terminal, and check its result
 afterwards.
 
+## Tests
+
+Tests come before code, and git shows it: commit a step's tests first (they fail, and the commit body
+pastes the failure), then commit the code that makes them pass. If a test changes after its code
+exists, the commit body says why. Pick the kinds the step needs:
+
+- **unit**: one function on cases computed by hand (A4 metrics).
+- **integration**: several modules together on a tiny corpus (index + search + `evaluate`).
+- **end-to-end**: the one command that builds the ablation table, run on a small slice.
+- **invariance and direction**: a change that must not move the result (case, extra spaces) keeps the
+  top 10; a change that must move it ("red" added) moves it the expected way.
+- **human check**: what a person must look at (spot-check queries, the demo), written as steps with the
+  expected result, and its outcome recorded in the journal.
+
 ## Review
 
 Run the `reviewer` agent (`.claude/agents/reviewer.md`) after a change to `docs/PLAN.md` and after

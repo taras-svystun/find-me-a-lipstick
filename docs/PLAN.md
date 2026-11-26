@@ -85,7 +85,7 @@ so Taras can guess them.
   remain: qids 1-49 are the dev set (49, for tuning choices), qids 50-199 the test set (149, for the table). Queries are committed in `eval/queries.jsonl`.
   Check: query count; Taras and Claude spot-check 10 queries and their labels.
   Lesson: how a label design can favour one system over another.
-- **A4. Metrics.** precision@10 and nDCG@10 (graded), plus "source item in top 10" as a
+- ✅ **A4. Metrics.** precision@10 and nDCG@10 (graded), plus "source item in top 10" as a
   diagnostic only, with tests on hand-made rankings.
   precision@10 is reported for no-brand queries only (a brand query can have one relevant item,
   so its precision@10 cannot pass 0.1); brand queries get nDCG@10 and "source item in top 10".

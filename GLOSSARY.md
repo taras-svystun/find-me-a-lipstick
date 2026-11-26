@@ -27,5 +27,11 @@ Hybrid text + photo search over beauty products, with an ablation table that mea
 - **recall@10**: the share of all relevant items that appear in the top 10. Not used: with hundreds
   of relevant items per query it cannot rise above a few percent.
 - **nDCG@10**: a top-10 score that rewards relevant items more the higher they are ranked, scaled to 0..1.
+  Each grade is divided by log2(rank + 1), then the sum (DCG) is divided by the best possible sum for
+  that query, so every query weighs the same however many relevant items it has.
+- **gain**: what one item adds to DCG before the rank discount. Here the grade itself (2 or 1), not
+  2^grade - 1, so the source item is not weighted up.
+- **mutation check**: break the code on purpose and see that some test fails; a test no mutant breaks
+  protects nothing.
 - **ablation table**: one row per system variant (BM25 / vectors / hybrid / hybrid + reranker), so the
   gain of each part is visible.

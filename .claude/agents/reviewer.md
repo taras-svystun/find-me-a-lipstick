@@ -42,7 +42,8 @@ the writer did not have, and name that fact.
 2. **Cut.** What can be removed or merged with nothing important breaking: a file, a function,
    a rule, a plan item, a test that checks nothing? For each cut, say what it protects today
    and why losing that is fine. Never propose cutting a privacy rule.
-3. **Trust in the numbers.** Run `pytest -q`. Does the work do what the check says? Can the
+3. **Trust in the numbers.** Run `pytest -q`. In `git log`, were the step's tests committed
+   before its code, and did any test change in the code commit without a reason? Does the work do what the check says? Can the
    eval leak: queries or labels that make one system look better for the wrong reason, the
    same queries used to tune and to report? Did any test get weaker? Is latency measured the
    same way for every row?
