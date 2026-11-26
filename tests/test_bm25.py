@@ -31,7 +31,7 @@ def test_score_one_term_by_hand():
 
 
 def test_repeats_saturate():
-    bm = BM25(["x", "y"], ["gloss " * 10, "matte"])  # one doc only: the same length as the average
+    bm = BM25(["x", "y"], ["gloss " * 10, "matte " * 10])  # both length 10 = the average: no length penalty
     idf = bm.idf("gloss")
     assert bm.score("gloss", 0) == pytest.approx(idf * 10 * 2.2 / (10 + 1.2))
     assert bm.score("gloss", 0) < idf * 2.2  # ten repeats never pass k1 + 1 = 2.2 times one idf

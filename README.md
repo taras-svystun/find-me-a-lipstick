@@ -24,4 +24,6 @@ curl --fail --parallel --parallel-max 16 -sS -K data/images.curl   # A2: downloa
 .venv/bin/python scripts/make_queries.py --relabel   # A3: recompute labels for the committed queries
 git config core.hooksPath hooks   # once: turn on the pre-commit hook (tests-first check)
 .venv/bin/pytest -q   # all tests (A4: metrics on hand-computed cases)
+.venv/bin/python scripts/ablation.py   # A5+: the ablation table on the test queries -> eval/ablation.md
+.venv/bin/python scripts/ablation.py --split dev   # the same on the dev queries, for tuning
 ```
