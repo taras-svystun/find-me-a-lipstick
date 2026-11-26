@@ -42,7 +42,8 @@ afterwards.
 
 Tests come before code, and git shows it: commit a step's tests first (they fail, and the commit body
 pastes the failure), then commit the code that makes them pass. If a test changes after its code
-exists, the commit body says why. Pick the kinds the step needs:
+exists, the commit body says why. `hooks/pre-commit` enforces it on the staged files: a commit that
+touches only `tests/` must fail its tests, any other commit must pass. Pick the kinds the step needs:
 
 - **unit**: one function on cases computed by hand (A4 metrics).
 - **integration**: several modules together on a tiny corpus (index + search + `evaluate`).

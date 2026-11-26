@@ -22,5 +22,6 @@ curl --fail --parallel --parallel-max 16 -sS -K data/images.curl   # A2: downloa
 .venv/bin/python scripts/make_queries.py   # A3: needs `ollama pull qwen3.5:9b`; writes eval/queries.jsonl (~20 min)
 .venv/bin/python scripts/make_queries.py --show 10   # A3: spot-check 10 queries and their labels
 .venv/bin/python scripts/make_queries.py --relabel   # A3: recompute labels for the committed queries
+git config core.hooksPath hooks   # once: turn on the pre-commit hook (tests-first check)
 .venv/bin/pytest -q   # all tests (A4: metrics on hand-computed cases)
 ```
