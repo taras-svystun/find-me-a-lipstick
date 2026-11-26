@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 IMAGES = DATA / "images"
@@ -33,8 +33,11 @@ def write_config() -> None:
 def is_real_photo(path: Path) -> bool:
     if not path.exists():
         return False
-    with Image.open(path) as img:
-        return img.size != PLACEHOLDER
+    try:
+        with Image.open(path) as img:
+            return img.size != PLACEHOLDER
+    except UnidentifiedImageError:  # an empty file or a saved HTTP error page
+        return False
 
 
 def check() -> None:

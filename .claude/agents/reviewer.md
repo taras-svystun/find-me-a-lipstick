@@ -47,7 +47,7 @@ the writer did not have, and name that fact.
    same queries used to tune and to report? Did any test get weaker? Is latency measured the
    same way for every row?
 4. **Privacy.** Grep the diff and the commit messages for every name and detail in the private
-   context (company, assistant, dates, interview). Also secrets and personal data.
+   context (company, assistant name, dates; "interview" and "Team Lead" are allowed). Also secrets and personal data.
 
 ## Report
 
