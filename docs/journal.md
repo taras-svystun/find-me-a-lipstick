@@ -152,3 +152,20 @@ Newest at the bottom.
   Dev (49 queries), k -> nDCG@10 all / p@10 no brand: 1 0.729/0.678, 10 0.728/0.692, 30 0.722/0.714,
   60 0.723/0.724, 100 0.724/0.727, 300 0.720/0.724. nDCG@10 is flat (0.009 range, well inside the noise
   of 49 queries), so k stays at the paper's 60 instead of the best cell; p@10 grows with k up to ~60.
+  Lesson riddle (X rank 1 in BM25 only, Y rank 3 in both): Taras said Y wins at k=60 and X at k=0
+  (unsure k=0 is allowed: it is, ranks start at 1). Right: X 1/61 = 0.016 < Y 2/63 = 0.032; at k=0 X 1
+  > Y 0.67. A large k flattens the reward per rank, so agreement between lists beats one first place.
+  Test (149 queries), Taras's guess -> measured: p@10 no brand 0.70 -> 0.698 [0.640, 0.758]; source@10
+  all 0.85 -> 0.711 [0.638, 0.779] (BM25 0.812). nDCG@10 brand 0.895 (BM25 0.857). Median 59 ms.
+  Paired: hybrid - BM25 p@10 no brand +0.055 [0.023, 0.090], the first row with a proven win over BM25;
+  nDCG@10 no brand +0.018 [-0.010, 0.047], not shown; source@10 all -0.101 [-0.161, -0.040], a proven
+  loss. hybrid - vectors text+photo: source@10 +0.181 [0.121, 0.242], nDCG@10 no brand +0.046 [0.020, 0.072].
+  Reading: held back until Taras answers the lesson trap (why source@10 fell); it goes in then.
+  Evidence for it, counted with a one-off loop over the test runs (BM25 and dense top 100, fused at
+  k=60): the hybrid loses BM25's source item from the top 10 on 19 test queries; BM25 had it at rank
+  1-8, and on 15 of them the dense list does not hold it in its top 100 (the other 4: dense rank 27-86).
+  Dev source@10 by k (added to `--tune` after the review): 1 0.796, 10 0.796, 30 0.714, 60 0.673,
+  100 0.673, 300 0.673. So on dev too a smaller k keeps the exact item and a larger one fills the shelf;
+  k=60 was chosen before this column existed and stays for the table. Which side matters is a product
+  question, open for Taras. Depth 100 is not tuned; it sets how many items can sit in both lists.
+  A8's reranker is the planned way to bring the exact item up. Latency: 59 ms runs BM25 and dense one after another.

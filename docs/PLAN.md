@@ -106,7 +106,7 @@ so Taras can guess them.
   chosen in this step. Three rows: vectors text, vectors photo, vectors text+photo (z-scored mix,
   text weight w). Model and w chosen on dev: SigLIP2, w 0.3. Photo queries are left for the demo.
   Check: rows in the table. Lesson: one space for text and photos.
-- **A7. Hybrid row.** RRF over BM25 and vectors. Check: row in the table. Lesson: RRF and its `k`.
+- ✅ **A7. Hybrid row.** RRF over BM25 and vectors. Check: row in the table. Lesson: RRF and its `k`.
 - **A8. Reranker row.** Cross-encoder over the hybrid top 50. Check: row in the table.
   Lesson: cross-encoder versus bi-encoder, and what it costs in latency.
 - **A9. One command.** `make ablation` (or one Python command) rebuilds the whole table.

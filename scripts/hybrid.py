@@ -21,7 +21,8 @@ from bm25 import BM25
 
 ROOT = Path(__file__).resolve().parent.parent
 K = 60  # the RRF paper's value (Cormack et al., 2009); dev nDCG@10 is flat over k 1-300 (0.720-0.729),
-#        so the best cell (k=1) would be fitted to noise (docs/journal.md, A7)
+#        so the best cell (k=1) would be fitted to noise; dev source@10 falls 0.796 -> 0.673 from k 10 to 60,
+#        an open product trade-off (docs/journal.md, A7)
 DEPTH = 100  # items taken from each list; a deeper item gets nothing from that list
 K_GRID = [1, 10, 30, 60, 100, 300]
 
@@ -48,16 +49,16 @@ class RRF:
 
 
 def tune(items: list[dict], queries: list[dict]) -> None:
-    """Print dev nDCG@10 (all queries) and p@10 (no brand) for each k; K is set by hand from it."""
+    """Print dev nDCG@10 (all), p@10 (no brand) and source@10 (all) for each k; K is set by hand from it."""
     from metrics import evaluate
     dev = [q for q in queries if q["split"] == "dev"]
     rrf = RRF.from_items(items)
     lists = {q["qid"]: [e.search(q["query"], rrf.depth) for e in rrf.engines] for q in dev}  # search once
-    print("k      nDCG@10 all   p@10 no brand")
+    print("k      nDCG@10 all   p@10 no brand   source@10 all")
     for k in K_GRID:
         rrf.k = k
         r = evaluate({qid: rrf.fuse(ls, 10) for qid, ls in lists.items()}, queries, "dev")
-        print(f"{k:<6} {r['all']['ndcg@10']:<13.3f} {r['no brand']['p@10']:.3f}")
+        print(f"{k:<6} {r['all']['ndcg@10']:<13.3f} {r['no brand']['p@10']:<15.3f} {r['all']['source@10']:.3f}")
 
 
 def main() -> None:
