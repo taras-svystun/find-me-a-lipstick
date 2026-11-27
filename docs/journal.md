@@ -140,3 +140,8 @@ Newest at the bottom.
   contains them; the slice stays in `metrics.py`). The real-model invariance test was cut: query
   normalisation is checked with a toy encoder, and the cut saves two model loads per commit.
   Lesson: interactive page (w slider, z switch) with four riddles.
+  Taras's results: riddle 1 (size of the text-photo cosine gap) missed, he did not expect such a
+  large gap; riddle 2 (the trap) right, by intuition, he could not yet explain why; riddle 3 (long
+  keyword query against a short one) missed, he had not noticed the models were CLIP and SigLIP2;
+  riddle 4 (why SigLIP2 beats CLIP here) right, without knowing the training difference before.
+  To revisit in A7: explain the trap in his own words.
