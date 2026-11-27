@@ -11,11 +11,17 @@ import time
 from pathlib import Path
 from statistics import median
 
+import dense
 from bm25 import BM25
 from metrics import evaluate
 
 ROOT = Path(__file__).resolve().parent.parent
-SYSTEMS = {"bm25": BM25.from_items}  # name -> build(items) -> object with .search(query, k)
+SYSTEMS = {  # name -> build(items) -> object with .search(query, k)
+    "bm25": BM25.from_items,
+    "vectors text": lambda items: dense.Dense.from_items(items, dense.MODEL, w=1.0),
+    "vectors photo": lambda items: dense.Dense.from_items(items, dense.MODEL, w=0.0),
+    "vectors text+photo": lambda items: dense.Dense.from_items(items, dense.MODEL, w=dense.W),
+}
 
 
 def build_table(items: list[dict], queries: list[dict], systems: list[str], split: str = "test") -> dict:

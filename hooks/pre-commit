@@ -9,6 +9,8 @@ staged=$(git diff --cached --name-only --diff-filter=ACMRD)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/pre-commit.XXXXXX") || exit 1  # macOS mktemp ignores TMPDIR without a template
 trap 'rm -rf "$tmp"' EXIT
 git checkout-index -a --prefix="$tmp/"
+# the copy has no models/ folder: use the repo's downloaded models
+export HF_HOME="${HF_HOME:-$repo/models}"
 cd "$tmp" && "$repo/.venv/bin/pytest" -q -p no:cacheprovider > "$tmp/.out" 2>&1
 status=$?
 tail -3 "$tmp/.out"

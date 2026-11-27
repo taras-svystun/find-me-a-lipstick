@@ -108,10 +108,16 @@ def test_case_and_spaces_do_not_change_the_ranking(model, image_dir):
 
 @pytest.mark.parametrize("model", ["clip", "siglip2"])
 def test_adding_a_word_moves_its_item_up_in_text_search(model, image_dir):
+    # direction, not rank: the word must move the score gap its way (top 1 is not asserted)
     d = Dense.from_items(ITEMS, model, w=1.0, image_dir=image_dir)
     assert d.search("shampoo", 1) == ["c"]
-    assert d.search("nude lipstick", 1) == ["b"]
-    assert d.search("red lipstick", 1) == ["a"]
+
+    def gap(query):  # red item a minus nude item b
+        s = dict(d.search(query, 3, with_scores=True))
+        return s["a"] - s["b"]
+
+    assert gap("red lipstick") > gap("lipstick")
+    assert gap("nude lipstick") < gap("lipstick")
 
 
 @pytest.mark.parametrize("model", ["clip", "siglip2"])

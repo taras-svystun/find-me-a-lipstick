@@ -8,6 +8,8 @@ Runs locally on a MacBook M1 with open models.
 
 ```sh
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# A6 models (~2 GB) into models/; scripts then run offline
+HF_HOME=models .venv/bin/python -c "from huggingface_hub import snapshot_download as d; d('openai/clip-vit-base-patch32', allow_patterns=['*.json', '*.txt', 'pytorch_model.bin']); d('google/siglip2-base-patch16-224', allow_patterns=['*.json', '*.model', '*.safetensors'])"
 ```
 
 ## Run
@@ -24,6 +26,9 @@ curl --fail --parallel --parallel-max 16 -sS -K data/images.curl   # A2: downloa
 .venv/bin/python scripts/make_queries.py --relabel   # A3: recompute labels for the committed queries
 git config core.hooksPath hooks   # once: turn on the pre-commit hook (tests-first check)
 .venv/bin/pytest -q   # all tests (A4: metrics on hand-computed cases)
+.venv/bin/python scripts/dense.py --embed clip      # A6: item text and photo vectors -> data/vectors/ (~12 min on CPU)
+.venv/bin/python scripts/dense.py --embed siglip2   # A6: the same for SigLIP2 (~25 min on CPU)
+.venv/bin/python scripts/dense.py --tune            # A6: model and text weight on the dev queries
 .venv/bin/python scripts/ablation.py   # A5+: the ablation table on the test queries -> eval/ablation.md
 .venv/bin/python scripts/ablation.py --split dev   # the same on the dev queries, for tuning
 ```
