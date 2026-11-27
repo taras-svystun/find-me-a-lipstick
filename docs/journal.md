@@ -91,3 +91,17 @@ Newest at the bottom.
   Median latency 10 ms per query on the M1.
   Lesson: interactive page with k1, b and four riddles, the last one the no-stemming trap; Taras
   solved all four.
+- 2026-11-27, A5 follow-up: 95% bootstrap intervals in every cell (resample the 149 test queries
+  1,000 times, seed 0), `paired_diff_ci` for comparing rows in A6, the p@10 query count per slice,
+  and a `text_overlap` slice: share of query words found anywhere in the source's indexed text
+  (threshold 0.7, picked by size: 43 test queries, 31 without brand; 18 are also in the title
+  slice). Tests first (`e120678`), code `73945c1`, 29 passed; `--relabel` changed only the new field.
+  Taras's guess -> measured (BM25): source@10 on text overlap < 0.7: 0.6 -> 0.488 [0.349, 0.628];
+  width of the p@10 no-brand interval: +-0.05 -> +-0.056 [0.587, 0.699], right.
+  Reading: copying from the item card explains much of BM25's source@10 (0.812 on all queries); its
+  p@10 on the slice stays 0.642, because the shelf word is in the categories of many items. The
+  slice is chosen by word overlap, BM25's own mechanism, so it is a diagnostic of copying, not a
+  set of "hard" queries; describe it that way. Overlapping intervals of two rows do not mean "no
+  difference": compare rows with the paired interval. Accepted: the upper percentile index leaves
+  24 of 1,000 means above it against 25 below the lower one (~0.1% coverage, invisible at 3
+  places). Cut candidate after A6 starts: the title-overlap slice, which the text slice contains.
