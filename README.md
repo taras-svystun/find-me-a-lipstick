@@ -29,6 +29,7 @@ git config core.hooksPath hooks   # once: turn on the pre-commit hook (tests-fir
 .venv/bin/python scripts/dense.py --embed clip      # A6: item text and photo vectors -> data/vectors/ (~12 min on CPU)
 .venv/bin/python scripts/dense.py --embed siglip2   # A6: the same for SigLIP2 (~25 min on CPU)
 .venv/bin/python scripts/dense.py --tune            # A6: model and text weight on the dev queries
+.venv/bin/python scripts/hybrid.py --tune           # A7: RRF k on the dev queries
 .venv/bin/python scripts/ablation.py   # A5+: the ablation table on the test queries -> eval/ablation.md
 .venv/bin/python scripts/ablation.py --split dev   # the same on the dev queries, for tuning
 ```

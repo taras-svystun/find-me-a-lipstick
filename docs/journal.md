@@ -145,3 +145,10 @@ Newest at the bottom.
   keyword query against a short one) missed, he had not noticed the models were CLIP and SigLIP2;
   riddle 4 (why SigLIP2 beats CLIP here) right, without knowing the training difference before.
   To revisit in A7: explain the trap in his own words.
+- 2026-11-27, A7 hybrid, code and dev choice (table waits for Taras's guesses): `scripts/hybrid.py`
+  fuses two lists, BM25 and vectors text+photo, with RRF, `1 / (k + rank)` over each list's top 100.
+  Two lists, not three (BM25, text, photo): with three, the dense side would vote twice. Tests first
+  (`3f482d3`, failing: module missing), 53 passed with the code.
+  Dev (49 queries), k -> nDCG@10 all / p@10 no brand: 1 0.729/0.678, 10 0.728/0.692, 30 0.722/0.714,
+  60 0.723/0.724, 100 0.724/0.727, 300 0.720/0.724. nDCG@10 is flat (0.009 range, well inside the noise
+  of 49 queries), so k stays at the paper's 60 instead of the best cell; p@10 grows with k up to ~60.

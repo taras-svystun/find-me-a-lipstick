@@ -12,6 +12,7 @@ from pathlib import Path
 from statistics import median
 
 import dense
+import hybrid
 from bm25 import BM25
 from metrics import SLICES, evaluate, paired_diff_ci, per_query
 
@@ -21,6 +22,7 @@ SYSTEMS = {  # name -> build(items) -> object with .search(query, k)
     "vectors text": lambda items: dense.Dense.from_items(items, dense.MODEL, w=1.0),
     "vectors photo": lambda items: dense.Dense.from_items(items, dense.MODEL, w=0.0),
     "vectors text+photo": lambda items: dense.Dense.from_items(items, dense.MODEL, w=dense.W),
+    "hybrid": hybrid.RRF.from_items,
 }
 
 
@@ -60,6 +62,8 @@ PAIRS = [  # (a, b): rows compared query by query, a - b
     ("vectors text+photo", "bm25"),
     ("vectors photo", "vectors text"),
     ("vectors text+photo", "vectors photo"),
+    ("hybrid", "bm25"),
+    ("hybrid", "vectors text+photo"),
 ]
 PAIR_ROWS = [r for r in ROWS if r[0] in
              {"p@10 no brand", "nDCG@10 no brand", "source@10 all", "source@10 text overlap < 0.7"}]
