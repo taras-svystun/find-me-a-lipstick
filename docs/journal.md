@@ -160,8 +160,19 @@ Newest at the bottom.
   Paired: hybrid - BM25 p@10 no brand +0.055 [0.023, 0.090], the first row with a proven win over BM25;
   nDCG@10 no brand +0.018 [-0.010, 0.047], not shown; source@10 all -0.101 [-0.161, -0.040], a proven
   loss. hybrid - vectors text+photo: source@10 +0.181 [0.121, 0.242], nDCG@10 no brand +0.046 [0.020, 0.072].
-  Reading: held back until Taras answers the lesson trap (why source@10 fell); it goes in then.
-  Evidence for it, counted with a one-off loop over the test runs (BM25 and dense top 100, fused at
+  Trap (why source@10 fell), Taras: "BM25 can match the brand word or a word like lipstick"; half
+  right, the words find the exact item, but the fall is the riddle's mechanism.
+  Reading: the source item is X. BM25 finds it by its title or brand words; the dense list often
+  misses it, so it gets one first place, 1/61. Any item both lists hold at rank r scores 2/(60 + r),
+  which is more whenever r < 62; ten shelf items held by both push the exact item out of the top 10.
+  At k=1 the bound is r < 3. RRF also drops how sure BM25 is: a rank 1 far above rank 2 counts the
+  same as a narrow one, which a score fusion would keep.
+  Team Lead question (why RRF, not a z-score sum as in A6), Taras: a sum lets -0.5 and +0.5 cancel.
+  Wrong: cancelling is what a mix should do when two methods disagree. The reasons: BM25 scores only
+  items with a query word (z over the rest is undefined), its scores are heavy-tailed while cosines
+  are bunched (one z unit means different things), and RRF needs no calibration, so it works on
+  engines that return only a list. Its cost is the lost confidence above.
+  Evidence for the reading, counted with a one-off loop over the test runs (BM25 and dense top 100, fused at
   k=60): the hybrid loses BM25's source item from the top 10 on 19 test queries; BM25 had it at rank
   1-8, and on 15 of them the dense list does not hold it in its top 100 (the other 4: dense rank 27-86).
   Dev source@10 by k (added to `--tune` after the review): 1 0.796, 10 0.796, 30 0.714, 60 0.673,
