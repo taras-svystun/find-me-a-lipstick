@@ -19,6 +19,8 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+from bm25 import item_text
+
 ROOT = Path(__file__).resolve().parent.parent
 ITEMS = ROOT / "data" / "items.jsonl"
 OUT = ROOT / "eval" / "queries.jsonl"
@@ -80,6 +82,12 @@ def title_overlap(query: str, title: str) -> float:
     """Share of query words that also appear in the source title."""
     q = words(query)
     return round(len(q & words(title)) / len(q), 2) if q else 0.0
+
+
+def text_overlap(query: str, item: dict) -> float:
+    """Share of query words found anywhere in the text BM25 indexes for the item. The prompt showed
+    Qwen the category path, features and description too, so copying is not only from the title."""
+    return title_overlap(query, item_text(item))
 
 
 def sample_sources(items: list[dict], rng: random.Random) -> list[dict]:
@@ -150,7 +158,8 @@ def make() -> None:
             named = bool(src["brand"]) and norm_brand(src["brand"]) in norm_brand(query)
             row = {"qid": n, "split": "dev" if n < N_DEV else "test", "query": query,
                    "source_id": src["id"], "category": label_group(src), "brand_in_query": named,
-                   "title_overlap": title_overlap(query, src["title"]), "relevant": grades}
+                   "title_overlap": title_overlap(query, src["title"]),
+                   "text_overlap": text_overlap(query, src), "relevant": grades}
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
             print(f"{n:3d} [{leaf(src)}] {query}  ({len(grades)} relevant)", flush=True)
             n += 1
@@ -168,6 +177,7 @@ def relabel() -> None:
             row["category"] = label_group(src)
             row["brand_in_query"] = bool(src["brand"]) and norm_brand(src["brand"]) in norm_brand(row["query"])
             row["relevant"] = labels(row["query"], src, items)
+            row["text_overlap"] = text_overlap(row["query"], src)
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
     print(f"relabelled {len(rows)} queries in {OUT}")
 

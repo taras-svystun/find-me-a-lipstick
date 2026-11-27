@@ -92,6 +92,9 @@ so Taras can guess them.
   Every row is also reported on queries with `title_overlap` below 0.3, to show how much of
   BM25's score comes from words the query copied from the title. no-brand precision@10 is also
   shown without the 22 Fragrance queries, whose 1,640 relevant items make it near 1.0 for any system.
+  Every cell carries a 95% bootstrap interval (resample the queries 1,000 times); two rows are
+  compared with a paired bootstrap on the same queries. A second low-overlap slice uses the whole
+  item text (`text_overlap` < 0.7), since Qwen also saw the category path, features and description.
   Check: tests pass on cases computed by hand.
   Lesson: nDCG on a 5-item toy ranking.
 - ✅ **A5. BM25 row.** BM25 and the text side of dense search index the same fields (title,

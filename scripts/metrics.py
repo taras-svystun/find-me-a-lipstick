@@ -4,10 +4,13 @@ A run is {qid: [item ids, best first]}; queries are the rows of eval/queries.jso
 """
 
 import math
+import random
 from statistics import mean
 
 K = 10
 LOW_OVERLAP = 0.3  # below this share of title words, a query cannot win by copying the title
+LOW_TEXT_OVERLAP = 0.7  # the same for the whole item text; 0.7 gives a slice as big as the title one
+N_BOOT = 1000
 
 
 def check_ranking(ranked: list[str], k: int = K) -> list[str]:
@@ -48,7 +51,30 @@ SLICES = {
     "no brand, no fragrance": lambda q: not q["brand_in_query"] and q["category"] != "Fragrance",
     "brand": lambda q: q["brand_in_query"],
     f"title overlap < {LOW_OVERLAP}": lambda q: q["title_overlap"] < LOW_OVERLAP,
+    f"text overlap < {LOW_TEXT_OVERLAP}": lambda q: q["text_overlap"] < LOW_TEXT_OVERLAP,
 }
+
+
+def _percentile_ci(values: list[float], n_boot: int, seed: int) -> tuple[float, float]:
+    """Resample the queries with replacement n_boot times, take the mean each time, and keep the
+    middle 95% of those means: how much the score would move on another draw of queries."""
+    rng = random.Random(seed)
+    n = len(values)
+    means = sorted(sum(rng.choices(values, k=n)) / n for _ in range(n_boot))
+    return means[int(n_boot * 0.025)], means[int(n_boot * 0.975)]
+
+
+def bootstrap_ci(scores: list[float], n_boot: int = N_BOOT, seed: int = 0) -> tuple[float, float] | None:
+    """95% interval of the mean per-query score."""
+    return _percentile_ci(scores, n_boot, seed) if scores else None
+
+
+def paired_diff_ci(a: list[float], b: list[float], n_boot: int = N_BOOT, seed: int = 0) -> tuple[float, float]:
+    """95% interval of mean(a - b), where a[i] and b[i] are two systems on the same query i.
+    Resampling the differences keeps each query's difficulty on both sides, so it cancels out."""
+    if len(a) != len(b):
+        raise ValueError(f"paired scores need the same queries: {len(a)} against {len(b)}")
+    return _percentile_ci([x - y for x, y in zip(a, b)], n_boot, seed)
 
 
 def evaluate(run: dict[int, list[str]], queries: list[dict], split: str = "test") -> dict[str, dict]:
@@ -70,11 +96,14 @@ def evaluate(run: dict[int, list[str]], queries: list[dict], split: str = "test"
     report = {}
     for name, keep in SLICES.items():
         scores = [s for q, s in rows if keep(q)]
-        p = [s["p@10"] for s in scores if s["p@10"] is not None]
-        report[name] = {
-            "n": len(scores),
-            "p@10": round(mean(p), 3) if p else None,
-            "ndcg@10": round(mean(s["ndcg@10"] for s in scores), 3) if scores else None,
-            "source@10": round(mean(s["source@10"] for s in scores), 3) if scores else None,
+        per_metric = {
+            "p@10": [s["p@10"] for s in scores if s["p@10"] is not None],
+            "ndcg@10": [s["ndcg@10"] for s in scores],
+            "source@10": [s["source@10"] for s in scores],
         }
+        report[name] = {"n": len(scores), "n p@10": len(per_metric["p@10"])}
+        for metric, values in per_metric.items():
+            ci = bootstrap_ci(values)
+            report[name][metric] = round(mean(values), 3) if values else None
+            report[name][f"{metric} ci"] = [round(x, 3) for x in ci] if ci else None
     return report

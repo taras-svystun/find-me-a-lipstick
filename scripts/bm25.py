@@ -50,20 +50,15 @@ class BM25:
         norm = 1 - self.b + self.b * self.lengths[doc] / self.avg_len
         return idf * tf * (self.k1 + 1) / (tf + self.k1 * norm)
 
-    def score(self, query: str, doc: int) -> float:
-        total = 0.0
-        for word in set(tokenize(query)):
-            tf = dict(self.postings.get(word, ())).get(doc, 0)
-            if tf:
-                total += self.term_score(self.idf(word), tf, doc)
-        return total
-
-    def search(self, query: str, k: int = 10) -> list[str]:
-        """Top k item ids with a score above 0; ties go to the earlier item, so runs are reproducible."""
+    def search(self, query: str, k: int = 10, with_scores: bool = False) -> list:
+        """Top k item ids with a score above 0; ties go to the earlier item, so runs are reproducible.
+        with_scores=True returns (id, score) pairs instead."""
         scores: dict[int, float] = defaultdict(float)
         for word in set(tokenize(query)):  # a word typed twice counts once
             idf = self.idf(word)
             for doc, tf in self.postings.get(word, ()):
                 scores[doc] += self.term_score(idf, tf, doc)
         best = sorted(scores, key=lambda d: (-scores[d], d))[:k]
+        if with_scores:
+            return [(self.ids[d], scores[d]) for d in best]
         return [self.ids[d] for d in best]

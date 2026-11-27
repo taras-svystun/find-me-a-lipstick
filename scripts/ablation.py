@@ -33,26 +33,34 @@ def build_table(items: list[dict], queries: list[dict], systems: list[str], spli
     return table
 
 
-COLUMNS = [  # (header, slice, metric)
+ROWS = [  # (label, slice, metric): one row per number, one column per system
     ("p@10 no brand", "no brand", "p@10"),
     ("p@10 no brand, no fragrance", "no brand, no fragrance", "p@10"),
     ("nDCG@10 no brand", "no brand", "ndcg@10"),
     ("nDCG@10 brand", "brand", "ndcg@10"),
     ("source@10 all", "all", "source@10"),
-    ("p@10 overlap < 0.3", "title overlap < 0.3", "p@10"),
-    ("nDCG@10 overlap < 0.3", "title overlap < 0.3", "ndcg@10"),
+    ("p@10 title overlap < 0.3", "title overlap < 0.3", "p@10"),
+    ("source@10 title overlap < 0.3", "title overlap < 0.3", "source@10"),
+    ("p@10 text overlap < 0.7", "text overlap < 0.7", "p@10"),
+    ("source@10 text overlap < 0.7", "text overlap < 0.7", "source@10"),
 ]
 
 
 def to_markdown(table: dict, split: str) -> str:
+    """Each cell is the mean and its 95% bootstrap interval over the slice's queries."""
     first = next(iter(table.values()))
-    sizes = ", ".join(f'{s} {first[s]["n"]}' for s in first if isinstance(first[s], dict))
+    sizes = ", ".join(f'{s} {r["n"]}' + (f' (p@10 on {r["n p@10"]})' if r["n p@10"] != r["n"] else "")
+                      for s, r in first.items() if isinstance(r, dict))
+    names = list(table)
     lines = [f"Split: {split}. Queries per slice: {sizes}.", "",
-             "| system | " + " | ".join(h for h, _, _ in COLUMNS) + " | median ms |",
-             "|---" * (len(COLUMNS) + 2) + "|"]
-    for name, row in table.items():
-        cells = [f"{row[s][m]:.3f}" for _, s, m in COLUMNS]
-        lines.append(f"| {name} | " + " | ".join(cells) + f' | {row["latency_ms"]} |')
+             "| metric | " + " | ".join(names) + " |", "|---" * (len(names) + 1) + "|"]
+    for label, s, m in ROWS + [("median ms", None, None)]:
+        if s is None:
+            cells = [str(table[n]["latency_ms"]) for n in names]
+        else:
+            cells = [f'{table[n][s][m]:.3f} [{table[n][s][m + " ci"][0]:.3f}, {table[n][s][m + " ci"][1]:.3f}]'
+                     for n in names]
+        lines.append(f"| {label} | " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
 
 

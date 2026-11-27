@@ -119,5 +119,5 @@ def test_build_table_end_to_end():
 def test_text_overlap_counts_words_found_anywhere_in_the_item():
     # "matte" and "red" are in the features and description, not the title
     assert text_overlap("matte red lipstick", ITEMS[0]) == 1.0
-    assert title_overlap("matte red lipstick", ITEMS[0]["title"]) == pytest.approx(2 / 3)
+    assert title_overlap("matte red lipstick", ITEMS[0]["title"]) == 0.67  # 2 of 3, rounded to 2 places
     assert text_overlap("glitter gloss for kids", ITEMS[1]) == 0.5
