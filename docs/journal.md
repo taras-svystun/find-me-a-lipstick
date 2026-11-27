@@ -180,3 +180,47 @@ Newest at the bottom.
   k=60 was chosen before this column existed and stays for the table. Which side matters is a product
   question, open for Taras. Depth 100 is not tuned; it sets how many items can sit in both lists.
   A8's reranker is the planned way to bring the exact item up. Latency: 59 ms runs BM25 and dense one after another.
+- 2026-11-27, A8 reranker: `scripts/rerank.py` rescores the hybrid top 50 with a cross-encoder
+  (`cross-encoder/ms-marco-MiniLM-L-6-v2`, query + item text up to 256 tokens) and sorts by its score;
+  ties keep the hybrid order. Tests first (`3e78ac1`, failing: module missing), 61 passed with the code.
+  Bug on the way: MiniLM crashed with SIGBUS (exit 138) or gave NaN. Cause: transformers maps the weight
+  file into memory without a copy, and this file's data starts at byte 12,098 (8 + a 12,090-byte header),
+  so all 106 tensors sit 2 bytes off a 4-byte boundary. Why the M1 then faults is an estimate (some
+  vector or BLAS code needs aligned floats); that the misalignment triggers it is shown. Evidence: the same input after
+  copying the weights scores 6.7; bge-reranker-base's 202 tensors are aligned and never failed. Fix: copy
+  the parameters after loading.
+  Dev (49 queries), model, depth -> nDCG@10 all / p@10 no brand / source@10 all / ms: hybrid 0.723 /
+  0.724 / 0.673; minilm 10 0.745/0.724/0.673/137, 20 0.734/0.695/0.735/288, 50 0.744/0.711/0.796/655,
+  100 0.740/0.695/0.816/1316; bge 10 0.722/0.724/0.673/750, 20 0.707/0.697/0.735/1350, 50 0.706/0.703/
+  0.776/3534, 100 0.705/0.705/0.796/7077. MiniLM wins nDCG@10 at every depth and every metric at depth
+  50, and is 5x faster, so it stays (bge wins p@10 at depth 20 and 100 by 0.002-0.010). Depth
+  stays at the plan's 50: 100 adds one source item in 49 queries and doubles the time. Why bge is worse
+  (estimate, not checked): its tokenizer is cased and we lower-case the query but not the item text; or its training data fits
+  short web passages even less than MiniLM's does.
+  Lesson riddle 1 (latency), Taras: 20-30 s per query for the top 50, 20-30 min for all 15.6k items.
+  Measured: 706 ms median on test (650 ms of it the cross-encoder, ~13 ms per pair in one batch); all
+  15.6k items would be ~3.4 min per query (linear estimate, not run). Off by ~30x on the top 50 and
+  ~7x on the whole corpus, but the order of the argument holds: the full corpus is out of reach.
+  Test (149 queries), Taras's guess -> measured: p@10 no brand 0.7075 -> 0.685 [0.627, 0.739]; source@10
+  all about BM25's 0.812 -> 0.839 [0.779, 0.899]. nDCG@10 no brand 0.704, brand 0.878.
+  Paired: rerank - hybrid source@10 all +0.128 [+0.067, +0.181] and nDCG@10 no brand +0.032 [+0.002,
+  +0.062], both shown; p@10 no brand -0.013 [-0.044, +0.018], not shown. rerank - BM25: p@10 no brand
+  +0.042 [+0.018, +0.065] and nDCG@10 no brand +0.050 [+0.025, +0.076], shown; source@10 +0.027
+  [-0.013, +0.067], not shown. So this is the first row that beats BM25 on the shelf and no longer
+  loses the exact item.
+  Trap (how many of the 19 source items the hybrid lost come back), Taras: "few, because the text looks
+  close to it even when the item is different". Wrong. Counted with `scripts/a8_trap.py` over the test
+  queries: all 19 were in the hybrid top 50 (hybrid rank 11-37), and the reranker put 18 back into the
+  top 10 (12 of them at rank 1-2; the 19th went to 13). Mechanism: RRF pushed the exact item down only
+  because the dense list did not hold it (A7: 15 of the 19); its BM25 rank 1-8 still keeps it in the
+  top 50. The
+  cross-encoder reads the very title and brand words BM25 matched, now next to the query, so it ranks
+  the item first. A reranker can only fix what is inside its depth: that bound held here, but at depth
+  10 it fixes nothing (dev source@10 at depth 10 equals the hybrid's).
+  The p@10 drop (-0.013) is not shown, on test or dev (-0.014 [-0.059, +0.030]). A hypothesis, should
+  it be real: MS MARCO teaches "is this passage the answer", which favours the one
+  exact item and items whose text repeats the query, not a full shelf of the right type. That is the
+  cost of a reranker trained on another task; fine-tuning it on our pairs is part C.
+  Review (no blockers): the journal's claims were cut back to what the numbers show ("every cell", the
+  cause of the crash, the p@10 drop); the trap count got its script. Note for A9: a rerun moves the ms
+  row by up to ~10%, so "same numbers" must leave latency out or allow a tolerance.

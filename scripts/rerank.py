@@ -27,8 +27,8 @@ from bm25 import item_text  # noqa: E402  (the same fields BM25 indexes; the cro
 from dense import normalize_text  # noqa: E402
 
 MODELS = {"minilm": "cross-encoder/ms-marco-MiniLM-L-6-v2", "bge": "BAAI/bge-reranker-base"}
-MODEL = "minilm"  # set from --tune on dev
-DEPTH = 50  # the plan's value; --tune checks 10-100 on dev
+MODEL = "minilm"  # dev, depth 50: nDCG@10 0.744 against bge 0.706, 655 ms against 3534 (docs/journal.md, A8)
+DEPTH = 50  # the plan's value; on dev, 100 adds one source item in 49 queries (0.796 -> 0.816) and doubles the time
 MAX_TOKENS = 256  # query + item text; the dense text encoder stops at 64
 DEPTH_GRID = [10, 20, 50, 100]
 

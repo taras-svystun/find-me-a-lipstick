@@ -33,6 +33,7 @@ git config core.hooksPath hooks   # once: turn on the pre-commit hook (tests-fir
 .venv/bin/python scripts/dense.py --tune            # A6: model and text weight on the dev queries
 .venv/bin/python scripts/hybrid.py --tune           # A7: RRF k on the dev queries
 .venv/bin/python scripts/rerank.py --tune           # A8: cross-encoder model and rerank depth on the dev queries
+.venv/bin/python scripts/a8_trap.py                  # A8: lost source items the reranker brings back (test)
 .venv/bin/python scripts/ablation.py   # A5+: the ablation table on the test queries -> eval/ablation.md
 .venv/bin/python scripts/ablation.py --split dev   # the same on the dev queries, for tuning
 ```
