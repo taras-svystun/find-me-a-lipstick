@@ -5,8 +5,9 @@ import math
 
 import pytest
 
-from ablation import build_table
+from ablation import build_table, to_markdown
 from bm25 import BM25, item_text, tokenize
+from make_queries import text_overlap, title_overlap
 
 DOCS = ["red lipstick", "nude lipstick", "dry hair shampoo", "red nail polish"]  # avg length 2.5
 IDS = ["a", "b", "c", "d"]
@@ -23,23 +24,36 @@ def test_idf_rare_word_weighs_more():
     assert bm.idf("glitter") == 0.0  # unknown word adds nothing
 
 
+def scores(bm, query):
+    """{item id: score} from search itself, the path that builds the table."""
+    return dict(bm.search(query, k=100, with_scores=True))
+
+
 def test_score_one_term_by_hand():
     bm = BM25(IDS, DOCS)
     # "shampoo" in doc c: tf 1, length 3, avg 2.5
     expected = math.log(1 + 3.5 / 1.5) * 1 * 2.2 / (1 + 1.2 * (0.25 + 0.75 * 3 / 2.5))  # 1.113
-    assert bm.score("shampoo", 2) == pytest.approx(expected)
+    assert scores(bm, "shampoo") == pytest.approx({"c": expected})
+
+
+def test_two_words_add_up_by_hand():
+    bm = BM25(IDS, DOCS)
+    # doc a "red lipstick": length 2, avg 2.5; red and lipstick are each in 2 of 4 docs
+    one = math.log(2) * 2.2 / (1 + 1.2 * (0.25 + 0.75 * 2 / 2.5))
+    assert scores(bm, "red lipstick")["a"] == pytest.approx(2 * one)
 
 
 def test_repeats_saturate():
     bm = BM25(["x", "y"], ["gloss " * 10, "matte " * 10])  # both length 10 = the average: no length penalty
     idf = bm.idf("gloss")
-    assert bm.score("gloss", 0) == pytest.approx(idf * 10 * 2.2 / (10 + 1.2))
-    assert bm.score("gloss", 0) < idf * 2.2  # ten repeats never pass k1 + 1 = 2.2 times one idf
+    assert scores(bm, "gloss")["x"] == pytest.approx(idf * 10 * 2.2 / (10 + 1.2))
+    assert scores(bm, "gloss")["x"] < idf * 2.2  # ten repeats never pass k1 + 1 = 2.2 times one idf
 
 
 def test_longer_doc_with_same_count_scores_lower():
     bm = BM25(["short", "long", "other"], ["red lipstick", "red lipstick with a soft satin finish", "shampoo"])
-    assert bm.score("lipstick", 0) > bm.score("lipstick", 1)
+    s = scores(bm, "lipstick")
+    assert s["short"] > s["long"]
 
 
 def test_search_ranks_and_breaks_ties_by_item_order():
@@ -87,12 +101,23 @@ def test_item_text_uses_brand_title_categories_features_description():
 def test_build_table_end_to_end():
     queries = [
         {"qid": 7, "split": "test", "query": "rouge co red lipstick", "source_id": "a", "brand_in_query": True,
-         "category": "Lipstick", "title_overlap": 0.25, "relevant": {"a": 2}},
+         "category": "Lipstick", "title_overlap": 0.25, "text_overlap": 1.0, "relevant": {"a": 2}},
         {"qid": 8, "split": "test", "query": "shampoo for dry hair", "source_id": "c", "brand_in_query": False,
-         "category": "Shampoo", "title_overlap": 0.25, "relevant": {"c": 2}},
+         "category": "Shampoo", "title_overlap": 0.25, "text_overlap": 0.5, "relevant": {"c": 2}},
     ]
     rows = build_table(ITEMS, queries, systems=["bm25"])
     row = rows["bm25"]
     assert row["all"]["ndcg@10"] == 1.0  # both source items come first
     assert row["no brand"]["p@10"] == pytest.approx(0.1)
     assert row["latency_ms"] >= 0
+    assert row["text overlap < 0.7"]["n"] == 1
+    md = to_markdown(rows, "test")
+    assert "| p@10 no brand | 0.100 [0.100, 0.100] |" in md  # a cell carries its 95% interval
+    assert "title overlap < 0.3 2 (p@10 on 1)" in md  # p@10 counts only no-brand queries
+
+
+def test_text_overlap_counts_words_found_anywhere_in_the_item():
+    # "matte" and "red" are in the features and description, not the title
+    assert text_overlap("matte red lipstick", ITEMS[0]) == 1.0
+    assert title_overlap("matte red lipstick", ITEMS[0]["title"]) == pytest.approx(2 / 3)
+    assert text_overlap("glitter gloss for kids", ITEMS[1]) == 0.5
