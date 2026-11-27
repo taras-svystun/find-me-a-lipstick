@@ -15,7 +15,15 @@ Hybrid text + photo search over beauty products, with an ablation table that mea
 - **embedding**: a vector that stands for a text or a photo, so that similar meanings sit close together.
 - **CLIP / SigLIP**: models that put texts and photos into one vector space, so a text query can find
   a photo.
-- **dense search** (vectors): search by nearest embeddings.
+- **dense search** (vectors): search by nearest embeddings. Three variants: the query against the item
+  text, against the item photo, or a mix of both ("vectors text+photo").
+- **modality gap**: text vectors and photo vectors sit in separate regions of the shared space, so a
+  query is much closer to any text than to any photo. A constant shift per query, it does not change a
+  ranking by itself.
+- **z-score**: (score - mean) / standard deviation over all items for one query. Used before mixing
+  the text and photo scores, so each side has the same spread and the text weight `w` means what it says.
+- **token limit**: the text encoder reads at most 64 (SigLIP2) or 77 (CLIP) tokens (word pieces); the
+  rest of an item text is cut.
 - **RRF** (reciprocal rank fusion): merges several ranked lists by summing `1 / (k + rank)` for each item.
 - **hybrid search**: BM25 and dense search merged with RRF.
 - **cross-encoder reranker**: a model that reads the query and one item together and scores the pair.

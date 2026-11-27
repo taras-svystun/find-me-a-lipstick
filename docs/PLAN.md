@@ -99,10 +99,13 @@ so Taras can guess them.
   Lesson: nDCG on a 5-item toy ranking.
 - ✅ **A5. BM25 row.** BM25 and the text side of dense search index the same fields (title,
   categories, features, description, plus brand: it is missing from 4k of 15.6k titles), so
-  the rows differ by method, not by input. Lucene's BM25 (k1 1.2, b 0.75), no stemming.
+  the rows differ by method, not by input (except that the dense text encoder cuts
+  the text at 64-77 tokens, so it mostly sees brand, title and categories). Lucene's BM25 (k1 1.2, b 0.75), no stemming.
   Check: row in the table. Lesson: BM25 term weights on a toy corpus.
-- **A6. Vectors row.** CLIP/SigLIP embeddings of item photos and item text; the model is
-  chosen in this step. Check: row in the table. Lesson: one space for text and photos.
+- ✅ **A6. Vectors row.** CLIP/SigLIP embeddings of item photos and item text; the model is
+  chosen in this step. Three rows: vectors text, vectors photo, vectors text+photo (z-scored mix,
+  text weight w). Model and w chosen on dev: SigLIP2, w 0.3. Photo queries are left for the demo.
+  Check: rows in the table. Lesson: one space for text and photos.
 - **A7. Hybrid row.** RRF over BM25 and vectors. Check: row in the table. Lesson: RRF and its `k`.
 - **A8. Reranker row.** Cross-encoder over the hybrid top 50. Check: row in the table.
   Lesson: cross-encoder versus bi-encoder, and what it costs in latency.

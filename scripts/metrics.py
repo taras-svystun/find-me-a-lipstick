@@ -77,9 +77,8 @@ def paired_diff_ci(a: list[float], b: list[float], n_boot: int = N_BOOT, seed: i
     return _percentile_ci([x - y for x, y in zip(a, b)], n_boot, seed)
 
 
-def evaluate(run: dict[int, list[str]], queries: list[dict], split: str = "test") -> dict[str, dict]:
-    """Mean metrics per slice. precision@10 averages only the slice's no-brand queries: a brand
-    query can have one relevant item, so its precision@10 cannot pass 0.1."""
+def per_query(run: dict[int, list[str]], queries: list[dict], split: str = "test") -> list[tuple[dict, dict]]:
+    """(query, {metric: score}) for each query of the split, in file order. p@10 is None for a brand query."""
     run = {int(qid): ranked for qid, ranked in run.items()}  # a run loaded from JSON has string keys
     if not run.keys() & {q["qid"] for q in queries if q["split"] == split}:
         raise ValueError(f"the run answers none of the {split} queries: wrong keys or wrong split?")
@@ -93,6 +92,13 @@ def evaluate(run: dict[int, list[str]], queries: list[dict], split: str = "test"
             "source@10": source_in_top_k(ranked, q["source_id"]),
             "p@10": None if q["brand_in_query"] else precision_at_k(ranked, q["relevant"]),
         }))
+    return rows
+
+
+def evaluate(run: dict[int, list[str]], queries: list[dict], split: str = "test") -> dict[str, dict]:
+    """Mean metrics per slice. precision@10 averages only the slice's no-brand queries: a brand
+    query can have one relevant item, so its precision@10 cannot pass 0.1."""
+    rows = per_query(run, queries, split)
     report = {}
     for name, keep in SLICES.items():
         scores = [s for q, s in rows if keep(q)]

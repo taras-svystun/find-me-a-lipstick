@@ -105,3 +105,38 @@ Newest at the bottom.
   difference": compare rows with the paired interval. Accepted: the upper percentile index leaves
   24 of 1,000 means above it against 25 below the lower one (~0.1% coverage, invisible at 3
   places). Cut candidate after A6 starts: the title-overlap slice, which the text slice contains.
+- 2026-11-27, A6 vectors: `scripts/dense.py` embeds each item's text (the BM25 fields, lower-cased, cut at
+  the token limit) and photo with CLIP ViT-B/32 and SigLIP2 base-224, on CPU (the sandbox has no GPU:
+  12 and 22 min for 15.6k items). Three rows: text, photo, and w * z(text) + (1 - w) * z(photo).
+  Tests first (`0553a62`, failing: module missing), code `93ead89` (46 passed). One test changed after
+  the code: "red lipstick" puts the nude lipstick first on both models (a long item text dilutes "red"),
+  so the direction test now checks that the word moves the score gap, not the top rank.
+  Setup notes: pip needs `--use-deprecated=legacy-certs` and Python downloads need `SSL_CERT_FILE` set to
+  certifi in the sandbox (Keychain blocked); Hugging Face's xet transfer is blocked, `HF_HUB_DISABLE_XET=1`.
+  Why z: measured on dev, text cosines average 0.48-0.63 and photo 0.02-0.22 (the modality gap, a
+  constant that cannot change a ranking), but text varies 2-2.6 times more across items (std 0.061-0.093
+  against 0.035-0.038), so a raw mix gives the text side more say than w. Commit `93ead89` blamed the gap;
+  the spread is the real reason.
+  Dev choice (49 queries, nDCG@10 all), Taras's guess -> measured: SigLIP2 -> SigLIP2 (best 0.648 against
+  CLIP 0.510); w 0.5 -> 0.3 (0.2-0.5 within 0.03, inside the noise). SigLIP2 photo alone 0.610 beats its
+  text alone 0.499; for CLIP photo 0.405 and text 0.423.
+  Test (149 queries), Taras's guess -> measured: p@10 no brand text 0.55 -> 0.586, photo 0.4 -> 0.646,
+  text+photo 0.6 -> 0.679 (BM25 0.643); source@10 on text overlap < 0.7, text+photo 0.5 -> 0.419 (BM25 0.488).
+  Paired bootstrap, p@10 no brand: photo - text +0.060 [0.016, 0.106]; text+photo - photo +0.033
+  [0.010, 0.057]; text+photo - BM25 +0.036 [-0.005, 0.082], so no proven win over BM25. nDCG@10 no brand
+  text+photo - BM25 -0.028 [-0.067, 0.013]; source@10 all -0.282 [-0.362, -0.201].
+  Reading: vectors find the shelf as well as BM25 but much more rarely the exact item (-0.282 on all
+  queries). Where the query shares few words with the card, the gap is -0.070 [-0.186, +0.023]: not
+  shown either way on 43 queries. The A5 hope "dense wins on source@10" fails. The
+  case for A7 is that the two make different mistakes; that is what RRF can use. Why the photo beats the
+  text (estimate, not checked): the label is the shelf, a photo shows the product type plainly, and the
+  item text the encoder sees is the first 64 tokens of brand and a long marketing title. A check: embed the
+  title alone and see if text catches up, judged on dev (`--tune`), not on the test table.
+  Median latency 46-49 ms per query (CPU query encoding plus 15.6k dot products), BM25 10 ms; reruns move
+  it ~20%, so the 1-3 ms between dense rows is noise.
+  Review (no blockers): the paired intervals were computed by hand, so `ablation.py` now writes them
+  (tests first `8ee296f`); `eval/ablation.json` is now {"rows", "paired"}. The low-overlap claim above was
+  cut back to what its interval shows. The title-overlap rows left the table (the text-overlap slice
+  contains them; the slice stays in `metrics.py`). The real-model invariance test was cut: query
+  normalisation is checked with a toy encoder, and the cut saves two model loads per commit.
+  Lesson: interactive page (w slider, z switch) with four riddles.

@@ -5,8 +5,9 @@ can be scored against an item's text and against its photo.
   text+photo = w * z(text) + (1 - w) * z(photo)
 
 z standardises one query's scores over all items (subtract the mean, divide by the standard
-deviation). Text-text cosines sit near 0.7 and text-photo cosines near 0.1-0.2 (the modality gap),
-so without z the weight w would mostly correct the scale instead of saying how much each side counts.
+deviation). The modality gap itself (text-text cosines near 0.5-0.6, text-photo near 0.0-0.2) is a
+constant per query and cannot change a ranking; the spread can: over items, text cosines vary 2-2.6
+times more than photo cosines (dev queries), so without z the text side would count for more than w says.
 
 Usage:
   .venv/bin/python scripts/dense.py --embed clip      # item vectors -> data/vectors/clip.npz (~12 min on CPU)
@@ -27,11 +28,11 @@ ROOT = Path(__file__).resolve().parent.parent
 os.environ.setdefault("HF_HOME", str(ROOT / "models"))  # models are downloaded once (README), then used offline
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
-from bm25 import item_text  # noqa: E402  (same fields as BM25, so rows differ by method, not input)
+from bm25 import item_text  # noqa: E402  (same fields as BM25, but cut at the token limit)
 
 MODELS = {"clip": "openai/clip-vit-base-patch32", "siglip2": "google/siglip2-base-patch16-224"}
-MODEL = "siglip2"  # chosen on the dev queries with --tune (docs/journal.md, A6)
-W = 0.5  # weight of the text side in "vectors text+photo", chosen with MODEL
+MODEL = "siglip2"  # chosen on the dev queries with --tune: nDCG@10 0.648 against CLIP 0.510 (docs/journal.md, A6)
+W = 0.3  # weight of the text side in "vectors text+photo": best dev cell; 0.2-0.5 are within 0.03
 IMAGE_DIR = ROOT / "data" / "images"
 VECTOR_DIR = ROOT / "data" / "vectors"
 W_GRID = [round(0.1 * i, 1) for i in range(11)]
@@ -136,8 +137,7 @@ class Dense:
 
 
 def tune(items: list[dict], queries: list[dict]) -> None:
-    """nDCG@10 on all dev queries for each model and w. The pick is the best text+photo cell; ties
-    go to the larger w (fewer photo terms to explain)."""
+    """Print nDCG@10 on all dev queries for each model and w; MODEL and W are set by hand from it."""
     from metrics import evaluate
     dev = [q for q in queries if q["split"] == "dev"]
     print("model   " + " ".join(f"w={w:<4}" for w in W_GRID))
