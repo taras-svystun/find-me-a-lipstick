@@ -71,3 +71,23 @@ Newest at the bottom.
   with 4 puzzles: Taras got 2 of 4 right before the reveal. Team Lead question "why divide by the ideal
   DCG?": Taras said "to get 0..1"; the deeper reason is that each query has its own maximum (2 for a
   one-item brand query, 5.5 for a full shelf), so a mean of raw DCG would rank queries, not systems.
+- 2026-11-27, A5 BM25: `scripts/bm25.py` (Lucene BM25, k1 1.2, b 0.75, no stemming) over title,
+  brand, categories, features and description; `scripts/ablation.py` writes `eval/ablation.md` and
+  `eval/ablation.json`. Tests were committed first (`c54be73`, failing: modules missing), code in
+  `8a31b39` (22 passed). One test changed after the code: its comment claimed a document of average
+  length, and it was not.
+  BM25 on the 149 test queries, Taras's guess -> measured: p@10 no brand 0.4 -> 0.643; nDCG@10 brand
+  0.6 -> 0.857; p@10 on `title_overlap` < 0.3 "halves" -> 0.621 (almost no drop). Random gives 0.04.
+  Why the overlap slice barely moves precision: the label is the shelf (leaf category), and the query
+  names the product type ("lipstick"), which BM25 also finds in the categories field; copied title
+  words help find the source item, not the shelf. Evidence: source@10 drops 0.812 -> 0.632 on that
+  slice while p@10 drops only 0.643 -> 0.621. So our shelf labels make precision@10 easy for a
+  keyword system; the dense rows must win on source@10 and low-overlap queries, or not at all.
+  Review (no blockers) limits this reading: (1) the 0.022 gap is inside the noise: the p@10 slice
+  averages 33 queries (standard error ~0.05), and dev gives 0.567 on the same slice; (2) the slice
+  removes only words copied from the title, while Qwen also saw the category path, features and
+  description, which BM25 indexes too ("matte lipstick long lasting ..." is in the slice). Open:
+  bootstrap confidence intervals before A6, and an overlap slice against the full item text.
+  Median latency 10 ms per query on the M1.
+  Lesson: interactive page with k1, b and four riddles, the last one the no-stemming trap; Taras
+  solved all four.

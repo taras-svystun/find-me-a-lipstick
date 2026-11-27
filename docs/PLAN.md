@@ -94,7 +94,7 @@ so Taras can guess them.
   shown without the 22 Fragrance queries, whose 1,640 relevant items make it near 1.0 for any system.
   Check: tests pass on cases computed by hand.
   Lesson: nDCG on a 5-item toy ranking.
-- **A5. BM25 row.** BM25 and the text side of dense search index the same fields (title,
+- ✅ **A5. BM25 row.** BM25 and the text side of dense search index the same fields (title,
   categories, features, description, plus brand: it is missing from 4k of 15.6k titles), so
   the rows differ by method, not by input. Lucene's BM25 (k1 1.2, b 0.75), no stemming.
   Check: row in the table. Lesson: BM25 term weights on a toy corpus.
